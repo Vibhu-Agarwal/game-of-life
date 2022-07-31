@@ -1,0 +1,5 @@
+export SOURCE_FILES="game_of_life tests"
+black --check --diff --target-version=py38 $SOURCE_FILES
+flake8 $SOURCE_FILES
+mypy . --show-error-codes
+isort --check --diff --project=uvicorn $SOURCE_FILES

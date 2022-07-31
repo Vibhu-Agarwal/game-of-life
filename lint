@@ -1,0 +1,4 @@
+export SOURCE_FILES="game_of_life tests"
+autoflake --in-place --recursive $SOURCE_FILES
+isort --project=game_of_life game_of_life tests $SOURCE_FILES
+black --target-version=py38 game_of_life tests $SOURCE_FILES

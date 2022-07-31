@@ -6,6 +6,18 @@ from .state_functions import state_functions
 
 class Game:
 
+    """
+    Game:
+    This is the place which plays the game, changes the alive-dead values
+
+    data_clean: keeps track if the data is clean or not
+    (dirty data means cells stores info of more than one state)
+
+    state_functions: rules through which cells die or are born
+
+    use_conn_comp: uses connected-components-method if set True
+    """
+
     data: DefaultDict[Cell, int]
     data_clean: bool
     state_functions: List[Callable[[bool, int], Optional[bool]]]
@@ -19,15 +31,25 @@ class Game:
         if self.use_conn_comp:
             self.alive_cell_set: Set[Cell] = set(data.current_alive_cells())
 
+    """
+    run_step: Plays one step of Game-of-Life
+    """
+
     def run_step(self) -> None:
         assert self.data_clean
         if self.use_conn_comp:
             for comp_grid_corner in self._find_disconnected_components():
+                # fill next states for all independent disconnected components
                 self._fill_next_state(comp_grid_corner)
         else:
             grid_corner = self._find_max_alive_box()
             if grid_corner is not None:
                 self._fill_next_state(grid_corner)
+
+    """
+    _fill_next_state: Stores the next states in the cells in the given grid-area
+    (makes the data dirty, but cleans up at the end)
+    """
 
     def _fill_next_state(self, grid_corners: GridCorner) -> None:
         assert self.data_clean
@@ -35,7 +57,7 @@ class Game:
         for i in range(grid_corners.top_left[0], grid_corners.bottom_right[0] + 1):
             for j in range(grid_corners.top_left[1], grid_corners.bottom_right[1] + 1):
                 cell = (i, j)
-                live_neighbours = self._live_neighbours_count(cell, grid_corners)
+                live_neighbours = self._live_neighbours_count(cell)
                 for state_function in self.state_functions:
                     new_alive_state = state_function(
                         bool(self.data[cell]), live_neighbours
@@ -46,12 +68,21 @@ class Game:
                         break
         self._clean_data(grid_corners)
 
+    """
+    _update_alive_cell_set: If using connected-components-method,
+    updates the alive-state of the current cell
+    """
+
     def _update_alive_cell_set(self, cell: Cell, alive: bool) -> None:
         if self.use_conn_comp:
             if alive:
                 self.alive_cell_set.add(cell)
             elif cell in self.alive_cell_set:
                 self.alive_cell_set.remove(cell)
+
+    """
+    _find_disconnected_components: Finds disconnected components using DFS
+    """
 
     def _find_disconnected_components(self) -> Iterable[GridCorner]:
         assert self.data_clean
@@ -79,6 +110,11 @@ class Game:
             disconnected_comps,
         )
 
+    """
+    _find_max_alive_box: If there is any alive cell in the data,
+    it returns the minimal-sized grid-area encapsulating all alive cells
+    """
+
     def _find_max_alive_box(self) -> Optional[GridCorner]:
         assert self.data_clean
         grid_corner: Optional[GridCorner] = None
@@ -89,14 +125,20 @@ class Game:
             return None
         return MatrixData.step_one_afar(grid_corner)
 
-    def _live_neighbours_count(self, cell: Cell, grid_corners: GridCorner) -> int:
-        assert not self.data_clean
+    """
+    _live_neighbours_count: Returns count of neighbours for the cell
+    which are alive
+    """
+
+    def _live_neighbours_count(self, cell: Cell) -> int:
         live = 0
-        for neighbour in MatrixData.neighbours(
-            cell, grid_corners=grid_corners, distance=1
-        ):
+        for neighbour in MatrixData.neighbours(cell, distance=1):
             live += self.data[neighbour] & 1
-        return live - (self.data[cell] & 1)
+        return live
+
+    """
+    _clean_data: Cleans up the previous stored state
+    """
 
     def _clean_data(self, grid_corners: GridCorner) -> None:
         if self.data_clean:

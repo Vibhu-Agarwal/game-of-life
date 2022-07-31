@@ -2,7 +2,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import DefaultDict, Iterable, Iterator, List, Optional, Tuple
 
-Cell = Tuple[int, int]
+Cell = Tuple[int, int]  # Stores x and y coordinates of a cell
 
 
 @dataclass
@@ -12,10 +12,21 @@ class GridCorner:
 
 
 class MatrixData:
+    """
+    Data Structure for storing the grid-data
+    It receives list of cells which are alive
+    """
+
+    data: DefaultDict[Cell, int]
+
     def __init__(self, alive_cells: List[Cell]):
-        self.data: DefaultDict[Cell, int] = defaultdict(int)
+        self.data = defaultdict(int)
         for point in alive_cells:
             self.data[point] = 1
+
+    """
+    current_alive_cells: Returns All the Cells which are Alive
+    """
 
     def current_alive_cells(self, *, sort=False) -> Iterable[Cell]:
         alive_cells = filter(lambda cell: self.data[cell] & 1, self.data.keys())
@@ -23,9 +34,17 @@ class MatrixData:
 
     def __str__(self) -> str:
         display = ""
-        for cell in self.current_alive_cells(sort=True):
+        for cell in self.current_alive_cells():
             display += f"{', '.join(map(str, cell))}\n"
         return display
+
+    """
+    new_grid_corner:
+    If the cell is outside the grid-area specified by grid_corner,
+    it returns a new grid_corner area which is minimal but still covers the cell
+
+    If the cell is inside, it returns the same grid back
+    """
 
     @classmethod
     def new_grid_corner(
@@ -45,6 +64,11 @@ class MatrixData:
                 )
             return GridCorner(top_left, bottom_right)
 
+    """
+    step_one_afar: It returns the grid-area encapsulating one extra row and column,
+    surrounding the passed grid_corner
+    """
+
     @classmethod
     def step_one_afar(cls, grid_corners: GridCorner) -> GridCorner:
         top_left = (grid_corners.top_left[0] - 1, grid_corners.top_left[1] - 1)
@@ -54,17 +78,15 @@ class MatrixData:
         )
         return GridCorner(top_left, bottom_right)
 
+    """
+    neighbours: It returns all the neighbours of a cell, which are at a given distance
+    """
+
     @classmethod
-    def neighbours(
-        cls, cell: Cell, *, grid_corners: Optional[GridCorner] = None, distance: int
-    ) -> Iterator[Cell]:
+    def neighbours(cls, cell: Cell, *, distance: int) -> Iterator[Cell]:
         row_start, row_end = cell[0] - distance, cell[0] + distance
         col_start, col_end = cell[1] - distance, cell[1] + distance
-        if grid_corners is not None:
-            mnr, mnc = grid_corners.top_left
-            mxr, mxc = grid_corners.bottom_right
-            row_start, row_end = max(row_start, mnr), min(row_end, mxr)
-            col_start, col_end = max(col_start, mnc), min(col_end, mxc)
         for i in range(row_start, 1 + row_end):
             for j in range(col_start, 1 + col_end):
-                yield i, j
+                if not (i == cell[0] and j == cell[1]):
+                    yield i, j
