@@ -68,17 +68,36 @@ I found connected-components thing as a very good optimization for grids with sp
 ## How to run
 
 ### Dependencies
-The project would need at least Python version 3.8 to run. You can install the requirements through:
+The project would need at least Python version 3.8 to run.
 
-```pip install -r requirements.txt```
+### Running the code
+```$ python -m game_of_life.run```
+
+#### Input Format
+First line: integer 'n' - containing the number of alive cells
+Next n lines are the space seperated coordinates of alive-cells
+
+```
+3
+1 0
+1 1
+1 2
+```
+
+#### Config:
+Edit the [run.py](./game_of_life/run.py) to change **`USE_CONNECTED_COMPONENTS_METHOD`** `True` or `False`.
+
+### Running the tests
+
+You can install the test dependencies through:
+
+```$ pip install -r requirements.txt```
 
 OR from `pyproject.toml` or `poetry.lock`.
 
-### Running the code
-```python -m game_of_life.run```
+**Run the tests by running:**
 
-### Running the tests
-```python```
+```$ pytest```
 
 ### Dev-Dependencies
 I've used multiple libraries for linting like `black`, `autoflake` and `isort` and libraries to check coverage for type-hints like `mypy` which can be checked out in pyproject.toml file under dev-dependencies.
